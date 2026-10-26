@@ -1,0 +1,30 @@
+{% extends "app_base.html" %}
+{% from "_macros.html" import empty_state %}
+{% block title %}Notifications{% endblock %}
+{% block heading %}Notifications{% endblock %}
+{% block actions %}
+{% if unread %}
+<form method="post" action="{{ url_for('main.mark_read') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn btn-ghost btn-sm" type="submit">{{ icon('check', 16) }}Mark all as read</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if items %}
+<ul class="notes">
+  {% for n in items %}
+  <li class="note {{ 'unread' if not n.is_read }}">
+    <span class="note-icon">{{ icon('bell', 18) }}</span>
+    <div>
+      {% if n.link %}<a href="{{ n.link }}">{{ n.message }}</a>{% else %}<span>{{ n.message }}</span>{% endif %}
+      <small>{{ n.created_at|ago }}</small>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+  {{ empty_state("You're all caught up", "Updates on your requests will appear here.") }}
+{% endif %}
+{% endblock %}

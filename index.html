@@ -1,0 +1,68 @@
+{% extends "public_base.html" %}
+{% block title %}Report a campus problem{% endblock %}
+{% block public_content %}
+<main>
+  <section class="hero">
+    <div class="hero-copy">
+      <h1>Report a campus problem and follow it until it's fixed.</h1>
+      <p class="lead">Broken light, leaking tap, dead Wi-Fi. Choose the sign that matches, say where it is, and get an update every time a technician moves it forward.</p>
+      <div class="hero-actions">
+        <a class="btn btn-sign" href="{{ url_for('tickets.new') }}">Report a problem</a>
+        <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Sign in</a>
+      </div>
+      {% if resolved %}
+      <p class="hero-note">{{ resolved }} request{{ '' if resolved == 1 else 's' }} resolved so far.</p>
+      {% endif %}
+    </div>
+
+    <div class="signboard" role="navigation" aria-label="Choose a category">
+      <div class="signboard-head">What needs attention?</div>
+      {% for c in categories %}
+      <a class="sign" href="{{ url_for('tickets.new', category=c.name) }}">
+        <span class="sign-icon">{{ icon(c.icon, 24) }}</span>
+        <span>
+          <span class="sign-name">{{ c.name }}</span>
+          <span class="sign-hint">{{ c.hint }}</span>
+        </span>
+        <span class="sign-arrow">{{ icon('arrow', 22) }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="band-inner">
+      <h2>How a request moves</h2>
+      <ol class="steps">
+        <li><h3>Submitted</h3><p>You describe the problem and add a photo if it helps. Administrators are alerted straight away.</p></li>
+        <li><h3>Assigned</h3><p>An administrator sets the priority and sends it to the right technician.</p></li>
+        <li><h3>In progress</h3><p>The technician updates the status and leaves notes. You get a notification for every change.</p></li>
+        <li><h3>Resolved</h3><p>Check the fix and rate the service so the team can see what needs to improve.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band band-plain">
+    <div class="band-inner targets">
+      <div>
+        <h2>Response targets</h2>
+        <p class="muted-lg">Every request gets a deadline based on its priority. Requests that pass it are flagged for administrators, so nothing quietly gets forgotten.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead><tr><th scope="col">Priority</th><th scope="col">Use it when</th><th scope="col">We aim to resolve within</th></tr></thead>
+          <tbody>
+          {% for t in targets %}
+            <tr>
+              <td data-label="Priority"><span class="prio pr-{{ t.priority|lower }}">{{ t.priority }}</span></td>
+              <td data-label="Use it when">{{ t.help }}</td>
+              <td data-label="Target"><strong>{{ t.hours|hours }}</strong></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

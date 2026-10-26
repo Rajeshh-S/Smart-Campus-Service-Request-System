@@ -1,0 +1,5 @@
+{% extends ('app_base.html' if me else 'public_base.html') %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block heading %}Something went wrong{% endblock %}
+{% block content %}{% include "_error_body.html" %}{% endblock %}
+{% block public_content %}<main class="error-wrap">{% include "_error_body.html" %}</main>{% endblock %}

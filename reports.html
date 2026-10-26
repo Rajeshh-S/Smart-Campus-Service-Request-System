@@ -1,0 +1,78 @@
+{% extends "app_base.html" %}
+{% block title %}Reports{% endblock %}
+{% block heading %}Reports{% endblock %}
+{% block actions %}
+<button class="btn btn-ghost btn-sm" type="button" data-print>{{ icon('download', 16) }}Print report</button>
+<a class="btn btn-ghost btn-sm" href="{{ url_for('admin.export_csv') }}">{{ icon('download', 16) }}Export CSV</a>
+{% endblock %}
+
+{% block content %}
+{% set k = stats.kpis %}
+<p class="page-sub">{{ k.total }} request{{ '' if k.total == 1 else 's' }} in total, {{ k.resolved }} resolved{% if k.on_time_pct is not none %}, {{ k.on_time_pct }}% of those within their response target{% endif %}.</p>
+
+<section class="block">
+  <div class="panel-head"><h2>By category</h2></div>
+  <div class="table-wrap">
+    <table class="grid">
+      <thead><tr><th scope="col">Category</th><th scope="col">Total</th><th scope="col">Open</th><th scope="col">Overdue</th><th scope="col">Resolved</th><th scope="col">Average time</th><th scope="col">Rating</th></tr></thead>
+      <tbody>
+      {% for c in by_category %}
+        <tr>
+          <td class="primary"><span class="inline-icon">{{ icon(category_icon(c.category), 17) }}<strong>{{ c.category }}</strong></span></td>
+          <td data-label="Total">{{ c.total }}</td>
+          <td data-label="Open">{{ c.open }}</td>
+          <td data-label="Overdue">{% if c.overdue %}<span class="badge st-rejected">{{ c.overdue }}</span>{% else %}0{% endif %}</td>
+          <td data-label="Resolved">{{ c.resolved }}</td>
+          <td data-label="Average time">{{ c.avg_time or 'n/a' }}</td>
+          <td data-label="Rating">{{ c.avg_rating if c.avg_rating is not none else 'n/a' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="faint">No requests yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="block">
+  <div class="panel-head"><h2>Response targets by priority</h2></div>
+  <div class="table-wrap">
+    <table class="grid">
+      <thead><tr><th scope="col">Priority</th><th scope="col">Target</th><th scope="col">Requests</th><th scope="col">Resolved</th><th scope="col">Resolved on time</th></tr></thead>
+      <tbody>
+      {% for p in by_priority %}
+        <tr>
+          <td class="primary"><span class="prio pr-{{ p.priority|lower }}">{{ p.priority }}</span></td>
+          <td data-label="Target">{{ PRIORITY_SLA_HOURS[p.priority]|hours }}</td>
+          <td data-label="Requests">{{ p.total }}</td>
+          <td data-label="Resolved">{{ p.resolved }}</td>
+          <td data-label="On time">{% if p.on_time_pct is not none %}{{ p.on_time_pct }}% ({{ p.on_time }} of {{ p.resolved }}){% else %}n/a{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="block">
+  <div class="panel-head"><h2>Technician performance</h2></div>
+  <div class="table-wrap">
+    <table class="grid">
+      <thead><tr><th scope="col">Technician</th><th scope="col">Open now</th><th scope="col">Resolved</th><th scope="col">Average time</th><th scope="col">Rating</th></tr></thead>
+      <tbody>
+      {% for t in by_technician %}
+        <tr>
+          <td class="primary"><strong>{{ t.name }}</strong>{% if t.specialty %}<div class="cell-sub"><span>{{ t.specialty }}</span></div>{% endif %}</td>
+          <td data-label="Open now">{{ t.open }}</td>
+          <td data-label="Resolved">{{ t.resolved }}</td>
+          <td data-label="Average time">{{ t.avg_time or 'n/a' }}</td>
+          <td data-label="Rating">{{ t.avg_rating if t.avg_rating is not none else 'n/a' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="faint">No technicians yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

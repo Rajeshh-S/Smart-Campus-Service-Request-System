@@ -1,0 +1,110 @@
+{# Reusable UI pieces. Import with: {% from "_macros.html" import status_badge %} #}
+
+{% macro flash_messages() %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flashes" role="status">
+      {% for category, message in messages %}
+      <div class="flash flash-{{ category }}">
+        <span>{{ message }}</span>
+        <button type="button" class="flash-close" aria-label="Dismiss message">{{ icon('x', 16) }}</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+{% endmacro %}
+
+{% macro status_badge(status) -%}
+<span class="badge st-{{ status|lower|replace(' ', '-') }}">{{ status }}</span>
+{%- endmacro %}
+
+{% macro priority_tag(priority) -%}
+<span class="prio pr-{{ priority|lower }}">{{ priority }}</span>
+{%- endmacro %}
+
+{% macro plaque(id) -%}
+<span class="plaque">{{ id|ticket }}</span>
+{%- endmacro %}
+
+{% macro sla_pill(info) -%}
+<span class="sla sla-{{ info.state }}">{{ icon('clock', 14) }}{{ info.label }}</span>
+{%- endmacro %}
+
+{% macro stars(value, size=18) -%}
+<span class="stars-static" role="img" aria-label="{{ value }} out of 5 stars">
+  {%- for n in range(1, 6) -%}<span class="{{ 'on' if n <= value else '' }}">{{ icon('star', size) }}</span>{%- endfor -%}
+</span>
+{%- endmacro %}
+
+{% macro avatar(name) -%}
+<span class="avatar" aria-hidden="true">{{ name|initials }}</span>
+{%- endmacro %}
+
+{% macro pagination(page, endpoint, args) %}
+  {% if page.pages > 1 %}
+  <nav class="pager" aria-label="Pagination">
+    <span class="pager-info">Showing {{ page.start }} to {{ page.end }} of {{ page.total }}</span>
+    <div class="pager-links">
+      {% if page.page > 1 %}<a href="{{ url_for(endpoint, **dict(args, page=page.page - 1)) }}">Previous</a>{% endif %}
+      {% for n in range(1, page.pages + 1) %}
+        {% if n == 1 or n == page.pages or (n - page.page)|abs <= 1 %}
+          {% if n == page.page %}<span class="current" aria-current="page">{{ n }}</span>
+          {% else %}<a href="{{ url_for(endpoint, **dict(args, page=n)) }}">{{ n }}</a>{% endif %}
+        {% elif (n - page.page)|abs == 2 %}<span class="gap">...</span>{% endif %}
+      {% endfor %}
+      {% if page.page < page.pages %}<a href="{{ url_for(endpoint, **dict(args, page=page.page + 1)) }}">Next</a>{% endif %}
+    </div>
+  </nav>
+  {% endif %}
+{% endmacro %}
+
+{% macro request_table(rows, admin=False) %}
+<div class="table-wrap">
+  <table class="grid">
+    <thead>
+      <tr>
+        <th scope="col">Request</th>
+        {% if admin %}<th scope="col">Requester</th><th scope="col">Assigned to</th>{% endif %}
+        <th scope="col">Priority</th>
+        <th scope="col">Status</th>
+        <th scope="col">Response target</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      {% set sla = sla_info(r) %}
+      <tr>
+        <td class="primary">
+          <div class="row-top">
+            {{ plaque(r.id) }}
+            <a class="cell-title" href="{{ url_for('tickets.detail', req_id=r.id) }}">{{ r.title }}</a>
+          </div>
+          <div class="cell-sub">
+            <span>{{ icon(category_icon(r.category), 15) }}{{ r.category }}</span>
+            <span>{{ icon('pin', 15) }}{{ r.building }}{% if r.room %}, {{ r.room }}{% endif %}</span>
+            <span>{{ icon('clock', 15) }}{{ r.created_at|ago }}</span>
+          </div>
+        </td>
+        {% if admin %}
+        <td data-label="Requester">{{ r.requester }}</td>
+        <td data-label="Assigned to">{% if r.assignee_name %}{{ r.assignee_name }}{% else %}<span class="faint">Unassigned</span>{% endif %}</td>
+        {% endif %}
+        <td data-label="Priority">{{ priority_tag(r.priority) }}</td>
+        <td data-label="Status">{{ status_badge(r.status) }}</td>
+        <td data-label="Target">{{ sla_pill(sla) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+{% macro empty_state(title, text, action_url=None, action_label=None) %}
+<div class="empty">
+  <div class="empty-icon">{{ icon('inbox', 30) }}</div>
+  <h2>{{ title }}</h2>
+  <p>{{ text }}</p>
+  {% if action_url %}<a class="btn btn-sign" href="{{ action_url }}">{{ action_label }}</a>{% endif %}
+</div>
+{% endmacro %}

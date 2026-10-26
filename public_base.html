@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import flash_messages %}
+{% block body_class %}public{% endblock %}
+{% block shell %}
+<header class="pub-header">
+  <div class="pub-inner">
+    <a class="brand" href="{{ url_for('main.index') }}">
+      <span class="brand-mark">{{ icon('tool', 22) }}</span>
+      <span class="brand-name">Smart Campus<span class="brand-sub">Service Desk</span></span>
+    </a>
+    <nav class="pub-nav" aria-label="Account">
+      <a href="{{ url_for('auth.login') }}">Sign in</a>
+      <a class="btn btn-sign btn-sm" href="{{ url_for('auth.register') }}">Create account</a>
+    </nav>
+  </div>
+</header>
+<div class="pub-flash">{{ flash_messages() }}</div>
+{% block public_content %}{% endblock %}
+<footer class="pub-footer">
+  <div class="pub-inner">
+    <span>Smart Campus Service Request System, built by Rajesh S.</span>
+    <a href="https://github.com/Rajeshh-S" rel="noopener">github.com/Rajeshh-S</a>
+  </div>
+</footer>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "app_base.html" %}
+{% from "_macros.html" import request_table, pagination, empty_state %}
+{% block title %}All requests{% endblock %}
+{% block heading %}All requests{% endblock %}
+{% block actions %}
+<a class="btn btn-ghost btn-sm" href="{{ url_for('admin.export_csv', **args) }}">{{ icon('download', 16) }}Export CSV</a>
+{% endblock %}
+
+{% block content %}
+<form class="filters" method="get" action="{{ url_for('admin.requests_list') }}">
+  <div class="search grow">
+    <label class="sr-only" for="q">Search requests</label>
+    {{ icon('search', 18) }}
+    <input id="q" type="search" name="q" placeholder="Search title, place, requester or ticket number" value="{{ filters.q }}">
+  </div>
+  <div>
+    <label class="sr-only" for="f-status">Status</label>
+    <select id="f-status" name="status">
+      <option value="">Any status</option>
+      {% for s in STATUSES %}<option {{ 'selected' if filters.status == s }}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="sr-only" for="f-cat">Category</label>
+    <select id="f-cat" name="category">
+      <option value="">Any category</option>
+      {% for c in CATEGORIES %}<option {{ 'selected' if filters.category == c.name }}>{{ c.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="sr-only" for="f-prio">Priority</label>
+    <select id="f-prio" name="priority">
+      <option value="">Any priority</option>
+      {% for p in PRIORITIES %}<option {{ 'selected' if filters.priority == p }}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="sr-only" for="f-assignee">Assigned to</label>
+    <select id="f-assignee" name="assignee">
+      <option value="">Anyone</option>
+      <option value="none" {{ 'selected' if filters.assignee == 'none' }}>Unassigned</option>
+      {% for t in technicians %}<option value="{{ t.id }}" {{ 'selected' if filters.assignee == t.id|string }}>{{ t.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="sr-only" for="f-sort">Sort by</label>
+    <select id="f-sort" name="sort">
+      {% for key, label in sort_labels.items() %}
+      <option value="{{ key }}" {{ 'selected' if (filters.sort or 'triage') == key }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <label class="check inline-check"><input type="checkbox" name="overdue" value="1" {{ 'checked' if filters.overdue }}> Overdue only</label>
+  <button class="btn btn-sm" type="submit">Apply</button>
+  <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.requests_list') }}">Reset</a>
+</form>
+
+{% if page.items %}
+  {{ request_table(page.items, admin=True) }}
+  {{ pagination(page, 'admin.requests_list', args) }}
+{% else %}
+  {{ empty_state("No requests match those filters", "Try a different search, or reset the filters.", url_for('admin.requests_list'), "Reset filters") }}
+{% endif %}
+{% endblock %}

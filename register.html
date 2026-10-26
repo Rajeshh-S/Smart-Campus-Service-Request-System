@@ -1,0 +1,60 @@
+{% extends "public_base.html" %}
+{% block title %}Create account{% endblock %}
+{% block public_content %}
+<main class="auth">
+  <aside class="auth-side">
+    <h2>One account for every campus problem.</h2>
+    <p>Students, lecturers and staff can all raise requests. Technicians and administrators get their access from the campus admin.</p>
+    <div class="ticket-demo" aria-hidden="true">
+      <div class="ticket-demo-head"><span class="plaque">SC-0043</span><span class="badge st-resolved">Resolved</span></div>
+      <strong>Leaking tap, Boys Hostel</strong>
+      <ul>
+        <li>{{ icon('check', 15) }}Fixed within the 1 day target</li>
+        <li>{{ icon('star', 15) }}Rated 5 out of 5 by the requester</li>
+      </ul>
+    </div>
+  </aside>
+
+  <section class="auth-form">
+    <div class="auth-card">
+      <h1>Create your account</h1>
+      <p class="muted">It takes under a minute.</p>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+          <label for="name">Full name</label>
+          <input id="name" name="name" required maxlength="80" autocomplete="name" autofocus value="{{ form.get('name', '') }}">
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required maxlength="120" autocomplete="email" value="{{ form.get('email', '') }}">
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="department">Department or hostel</label>
+            <input id="department" name="department" maxlength="80" value="{{ form.get('department', '') }}">
+          </div>
+          <div class="field">
+            <label for="phone">Phone (optional)</label>
+            <input id="phone" name="phone" type="tel" maxlength="20" autocomplete="tel" value="{{ form.get('phone', '') }}">
+          </div>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="pw">
+            <input id="password" name="password" type="password" minlength="8" required autocomplete="new-password">
+            <button type="button" class="pw-toggle" data-toggle-password="password" aria-label="Show password">{{ icon('eye', 18) }}</button>
+          </div>
+          <p class="hint">At least 8 characters, with a letter and a number.</p>
+        </div>
+        <div class="field">
+          <label for="confirm">Confirm password</label>
+          <input id="confirm" name="confirm" type="password" required autocomplete="new-password">
+        </div>
+        <button class="btn btn-block" type="submit">Create account</button>
+      </form>
+      <p class="auth-alt">Already registered? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+    </div>
+  </section>
+</main>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "app_base.html" %}
+{% from "_macros.html" import request_table %}
+{% block title %}Overview{% endblock %}
+{% block heading %}Overview{% endblock %}
+{% block actions %}
+<a class="btn btn-ghost btn-sm" href="{{ url_for('admin.export_csv') }}">{{ icon('download', 16) }}Export CSV</a>
+{% endblock %}
+
+{% block content %}
+{% set k = stats.kpis %}
+<section class="figures" aria-label="Key figures">
+  <a class="figure" href="{{ url_for('admin.requests_list') }}">
+    <b>{{ k.open }}</b><span>Open requests</span>
+  </a>
+  <a class="figure {{ 'figure-alert' if k.overdue }}" href="{{ url_for('admin.requests_list', overdue=1) }}">
+    <b>{{ k.overdue }}</b><span>Past their response target</span>
+  </a>
+  <div class="figure">
+    <b>{{ k.avg_resolution_label or 'n/a' }}</b><span>Average time to resolve</span>
+  </div>
+  <div class="figure">
+    <b>{% if k.on_time_pct is not none %}{{ k.on_time_pct }}%{% else %}n/a{% endif %}</b><span>Resolved within target</span>
+  </div>
+  <div class="figure">
+    <b>{{ k.avg_rating if k.avg_rating is not none else 'n/a' }}</b>
+    <span>{% if k.rating_count %}Average rating from {{ k.rating_count }} review{{ '' if k.rating_count == 1 else 's' }}{% else %}Average rating{% endif %}</span>
+  </div>
+</section>
+
+<div class="chart-grid" data-stats-url="{{ url_for('api.admin_stats') }}">
+  <section class="panel chart-trend">
+    <div class="panel-head">
+      <h2>Requests in the last 14 days</h2>
+      <div class="legend">
+        <span><i class="sw sw-created"></i>Submitted</span>
+        <span><i class="sw sw-resolved"></i>Resolved</span>
+      </div>
+    </div>
+    <div id="chart-trend" class="chart" role="img" aria-label="Line chart of requests submitted and resolved each day"><p class="faint">Loading chart...</p></div>
+  </section>
+  <section class="panel">
+    <h2>By status</h2>
+    <div id="chart-status" class="chart"><p class="faint">Loading chart...</p></div>
+  </section>
+  <section class="panel chart-cats">
+    <h2>By category</h2>
+    <div id="chart-category" class="chart"><p class="faint">Loading chart...</p></div>
+  </section>
+</div>
+
+<section class="block">
+  <div class="panel-head">
+    <h2>Needs attention</h2>
+    <a href="{{ url_for('admin.requests_list', overdue=1) }}">See everything overdue</a>
+  </div>
+  {% if attention %}
+    {{ request_table(attention, admin=True) }}
+  {% else %}
+    <div class="panel calm">{{ icon('check', 20) }}Nothing is overdue or urgent right now.</div>
+  {% endif %}
+</section>
+
+<section class="block">
+  <div class="panel-head"><h2>Technician workload</h2><a href="{{ url_for('admin.users', role='technician') }}">Manage technicians</a></div>
+  {% if technicians %}
+  <div class="table-wrap">
+    <table class="grid">
+      <thead><tr><th scope="col">Technician</th><th scope="col">Open</th><th scope="col">Resolved</th><th scope="col">Average time</th><th scope="col">Rating</th></tr></thead>
+      <tbody>
+      {% for t in technicians %}
+        <tr>
+          <td class="primary"><strong>{{ t.name }}</strong>{% if t.specialty %}<div class="cell-sub"><span>{{ t.specialty }}</span></div>{% endif %}</td>
+          <td data-label="Open">{{ t.open }}</td>
+          <td data-label="Resolved">{{ t.resolved }}</td>
+          <td data-label="Average time">{{ t.avg_time or 'n/a' }}</td>
+          <td data-label="Rating">{{ t.avg_rating if t.avg_rating is not none else 'n/a' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="panel calm">{{ icon('users', 20) }}No technicians yet. Open <a href="{{ url_for('admin.users') }}">Users</a> and give someone the Technician role.</div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>
+{% endblock %}

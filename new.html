@@ -1,0 +1,84 @@
+{% extends "app_base.html" %}
+{% block title %}New request{% endblock %}
+{% block heading %}New request{% endblock %}
+
+{% block content %}
+<div class="form-layout">
+  <form class="panel form-panel" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="field">
+      <span class="label" id="cat-label">What kind of problem is it?</span>
+      <div class="tiles" role="radiogroup" aria-labelledby="cat-label">
+        {% for c in CATEGORIES %}
+        <div class="tile">
+          <input type="radio" name="category" id="cat-{{ loop.index }}" value="{{ c.name }}" {{ 'checked' if form.get('category') == c.name }} required>
+          <label for="cat-{{ loop.index }}">{{ icon(c.icon, 22) }}<span>{{ c.name }}</span></label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="title">Short title</label>
+      <input id="title" name="title" maxlength="100" required placeholder="e.g. Projector not working in Room 204" value="{{ form.get('title', '') }}">
+    </div>
+
+    <div class="form-row">
+      <div class="field">
+        <label for="building">Building or area</label>
+        <select id="building" name="building" required>
+          <option value="">Choose...</option>
+          {% for b in buildings %}<option {{ 'selected' if form.get('building') == b }}>{{ b }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="room">Floor, room or spot</label>
+        <input id="room" name="room" maxlength="40" placeholder="e.g. 2nd floor, Room 204" value="{{ form.get('room', '') }}">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="description">What is wrong?</label>
+      <textarea id="description" name="description" rows="5" maxlength="2000" required data-counter="desc-count" placeholder="Describe the problem and when it started.">{{ form.get('description', '') }}</textarea>
+      <p class="hint"><span id="desc-count">0</span> / 2000 characters</p>
+    </div>
+
+    <div class="field">
+      <span class="label" id="prio-label">How urgent is it?</span>
+      <div class="segments" role="radiogroup" aria-labelledby="prio-label">
+        {% for p in PRIORITIES %}
+        <div class="segment">
+          <input type="radio" name="priority" id="pr-{{ p|lower }}" value="{{ p }}" {{ 'checked' if form.get('priority') == p }}>
+          <label for="pr-{{ p|lower }}"><strong>{{ p }}</strong><small>{{ PRIORITY_HELP[p] }}</small><em>Target: {{ PRIORITY_SLA_HOURS[p]|hours }}</em></label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="photo">Photo (optional)</label>
+      <input id="photo" name="photo" type="file" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="photo-preview">
+      <p class="hint">PNG, JPG, GIF or WebP, up to 5 MB.</p>
+      <img id="photo-preview" class="photo-preview" alt="Preview of the selected photo" hidden>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-sign" type="submit">Submit request</button>
+      <a class="btn btn-ghost" href="{{ url_for('tickets.mine') }}">Cancel</a>
+    </div>
+  </form>
+
+  <aside class="tips">
+    <section class="panel">
+      <h2>Get it fixed faster</h2>
+      <ul class="tick-list">
+        <li>{{ icon('pin', 16) }}Name the exact place: building, floor and room.</li>
+        <li>{{ icon('image', 16) }}Add a photo for damage, leaks or error screens.</li>
+        <li>{{ icon('alert', 16) }}Keep Urgent for safety risks and complete outages.</li>
+        <li>{{ icon('bell', 16) }}You'll be notified whenever the status changes.</li>
+      </ul>
+    </section>
+  </aside>
+</div>
+{% endblock %}

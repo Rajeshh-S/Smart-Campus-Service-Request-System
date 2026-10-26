@@ -1,0 +1,158 @@
+{% extends "app_base.html" %}
+{% from "_macros.html" import status_badge, priority_tag, plaque, sla_pill, stars %}
+{% set kind_icons = {'created': 'plus', 'status': 'tool', 'assign': 'user', 'priority': 'alert',
+                     'comment': 'message', 'note': 'lock', 'feedback': 'star'} %}
+{% block title %}{{ r.id|ticket }} {{ r.title }}{% endblock %}
+{% block heading %}Request details{% endblock %}
+{% block actions %}
+<a class="btn btn-ghost btn-sm" href="{{ url_for('admin.requests_list' if me.role == 'admin' else 'tickets.mine') }}">Back to list</a>
+{% endblock %}
+
+{% block content %}
+<header class="ticket-head">
+  <div class="ticket-head-top">
+    {{ plaque(r.id) }} {{ status_badge(r.status) }} {{ priority_tag(r.priority) }} {{ sla_pill(sla) }}
+  </div>
+  <h2 class="ticket-title">{{ r.title }}</h2>
+  <div class="cell-sub">
+    <span>{{ icon(category_icon(r.category), 15) }}{{ r.category }}</span>
+    <span>{{ icon('pin', 15) }}{{ r.building }}{% if r.room %}, {{ r.room }}{% endif %}</span>
+    <span>{{ icon('clock', 15) }}Submitted {{ r.created_at|ago }}</span>
+  </div>
+</header>
+
+<div class="detail-grid">
+  <div class="detail-main">
+    <section class="panel">
+      <h2>What happened</h2>
+      <p class="prewrap">{{ r.description }}</p>
+      {% if r.attachment %}
+      <a class="photo" href="{{ url_for('main.uploads', filename=r.attachment) }}" target="_blank" rel="noopener">
+        <img src="{{ url_for('main.uploads', filename=r.attachment) }}" alt="Photo attached to this request">
+      </a>
+      {% endif %}
+    </section>
+
+    {% if r.status == 'Resolved' %}
+    <section class="panel" id="feedback">
+      <h2>Service feedback</h2>
+      {% if r.rating %}
+        <p class="rating-line">{{ stars(r.rating, 22) }} <span class="faint">{{ r.rating }} out of 5</span></p>
+        {% if r.feedback %}<p class="prewrap">{{ r.feedback }}</p>{% endif %}
+      {% elif is_owner %}
+        <p class="muted">Was the problem fixed properly? Your rating helps the team improve.</p>
+        <form method="post" action="{{ url_for('tickets.feedback', req_id=r.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="stars-input" role="radiogroup" aria-label="Rating">
+            {% for n in [5, 4, 3, 2, 1] %}
+            <input type="radio" name="rating" id="star{{ n }}" value="{{ n }}" required>
+            <label for="star{{ n }}" title="{{ n }} star{{ 's' if n > 1 }}">{{ icon('star', 30) }}<span class="sr-only">{{ n }} star{{ 's' if n > 1 }}</span></label>
+            {% endfor %}
+          </div>
+          <div class="field">
+            <label for="fb">Comments (optional)</label>
+            <textarea id="fb" name="feedback" rows="3" maxlength="500"></textarea>
+          </div>
+          <button class="btn" type="submit">Send feedback</button>
+        </form>
+      {% else %}
+        <p class="faint">The requester hasn't rated this request yet.</p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="panel" id="timeline">
+      <h2>Activity</h2>
+      <ol class="timeline">
+        {% for e in events %}
+        <li class="tl-item {{ 'internal' if e.is_internal }}">
+          <span class="tl-dot">{{ icon(kind_icons.get(e.kind, 'dots'), 13) }}</span>
+          <div class="tl-meta">
+            <strong>{{ e.actor or 'System' }}</strong>
+            {% if e.actor_role in ('admin', 'technician') %}<span class="role-tag">{{ ROLE_LABELS[e.actor_role] }}</span>{% endif %}
+            <time title="{{ e.created_at|dt }}">{{ e.created_at|ago }}</time>
+          </div>
+          {% if e.is_internal %}<div class="tl-label">Internal note, hidden from the requester</div>{% endif %}
+          <p class="tl-body">{{ e.message }}</p>
+        </li>
+        {% endfor %}
+      </ol>
+
+      <form id="reply" class="reply" method="post" action="{{ url_for('tickets.comment', req_id=r.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="sr-only" for="msg">Add a comment</label>
+        <textarea id="msg" name="message" rows="3" maxlength="1000" required placeholder="Add a comment or more detail"></textarea>
+        <div class="reply-actions">
+          {% if me.role in ('admin', 'technician') %}
+          <label class="check"><input type="checkbox" name="internal" value="1"> Internal note (staff only)</label>
+          {% else %}<span></span>{% endif %}
+          <button class="btn btn-sm" type="submit">Post comment</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <aside class="detail-side">
+    <section class="panel">
+      <h2>Details</h2>
+      <dl class="facts">
+        <div><dt>Requested by</dt><dd>{{ r.requester }}{% if r.requester_dept %}<small>{{ r.requester_dept }}</small>{% endif %}</dd></div>
+        {% if me.role in ('admin', 'technician') %}
+        <div><dt>Contact</dt><dd><a href="mailto:{{ r.requester_email }}">{{ r.requester_email }}</a>{% if r.requester_phone %}<small>{{ r.requester_phone }}</small>{% endif %}</dd></div>
+        {% endif %}
+        <div><dt>Assigned to</dt><dd>{% if r.assignee_name %}{{ r.assignee_name }}{% if r.assignee_specialty %}<small>{{ r.assignee_specialty }}</small>{% endif %}{% else %}<span class="faint">Not assigned yet</span>{% endif %}</dd></div>
+        <div><dt>Submitted</dt><dd>{{ r.created_at|dt }}</dd></div>
+        <div><dt>Response target</dt><dd>{{ r.due_at|dt }}</dd></div>
+        <div><dt>Last updated</dt><dd>{{ r.updated_at|dt }}</dd></div>
+        {% if r.resolved_at %}<div><dt>Resolved</dt><dd>{{ r.resolved_at|dt }}</dd></div>{% endif %}
+      </dl>
+    </section>
+
+    {% if can_manage %}
+    <section class="panel">
+      <h2>Update this request</h2>
+      <form method="post" action="{{ url_for('tickets.update', req_id=r.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% set options = STATUSES if me.role == 'admin' else ([r.status] + tech_statuses|reject('equalto', r.status)|list) %}
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            {% for s in options %}<option {{ 'selected' if r.status == s }}>{{ s }}</option>{% endfor %}
+          </select>
+        </div>
+        {% if me.role == 'admin' %}
+        <div class="field">
+          <label for="assignee">Assign to</label>
+          <select id="assignee" name="assignee">
+            <option value="">Unassigned</option>
+            {% for t in technicians %}
+            <option value="{{ t.id }}" {{ 'selected' if t.id == r.assignee_id }}>{{ t.name }}{% if t.specialty %} ({{ t.specialty }}){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="priority">Priority</label>
+          <select id="priority" name="priority">
+            {% for p in PRIORITIES %}<option {{ 'selected' if r.priority == p }}>{{ p }}</option>{% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        <div class="field">
+          <label for="upd-msg">Message</label>
+          <textarea id="upd-msg" name="message" rows="3" maxlength="1000" placeholder="Optional. The requester can read it unless you mark it internal."></textarea>
+        </div>
+        <label class="check"><input type="checkbox" name="internal" value="1"> Internal note (staff only)</label>
+        <button class="btn btn-block" type="submit">Save changes</button>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if is_owner and r.status == 'Pending' %}
+    <form method="post" action="{{ url_for('tickets.cancel', req_id=r.id) }}" data-confirm="Cancel this request? This can't be undone.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-danger btn-block" type="submit">Cancel this request</button>
+    </form>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

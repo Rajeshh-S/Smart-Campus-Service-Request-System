@@ -1,0 +1,84 @@
+{% extends "app_base.html" %}
+{% from "_macros.html" import pagination, empty_state, avatar %}
+{% block title %}Users{% endblock %}
+{% block heading %}Users{% endblock %}
+
+{% block content %}
+<p class="page-sub">Give people the Technician role so you can assign requests to them. Disabled accounts can't sign in.</p>
+
+<form class="filters" method="get" action="{{ url_for('admin.users') }}">
+  <div class="search grow">
+    <label class="sr-only" for="q">Search users</label>
+    {{ icon('search', 18) }}
+    <input id="q" type="search" name="q" placeholder="Search name, email or department" value="{{ q }}">
+  </div>
+  <div>
+    <label class="sr-only" for="f-role">Role</label>
+    <select id="f-role" name="role">
+      <option value="">All roles</option>
+      {% for r in roles %}<option value="{{ r }}" {{ 'selected' if role == r }}>{{ role_labels[r] }}</option>{% endfor %}
+    </select>
+  </div>
+  <button class="btn btn-sm" type="submit">Apply</button>
+  <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.users') }}">Reset</a>
+</form>
+
+{% if page.items %}
+<div class="table-wrap">
+  <table class="grid users-table">
+    <thead>
+      <tr>
+        <th scope="col">Person</th><th scope="col">Role</th><th scope="col">Specialty</th>
+        <th scope="col">Activity</th><th scope="col">Can sign in</th><th scope="col"><span class="sr-only">Save</span></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for u in page.items %}
+      <tr>
+        <td class="primary">
+          <div class="person">
+            {{ avatar(u.name) }}
+            <div>
+              <strong>{{ u.name }}</strong>{% if u.id == me.id %} <span class="role-tag">You</span>{% endif %}
+              <div class="cell-sub"><span>{{ u.email }}</span>{% if u.department %}<span>{{ u.department }}</span>{% endif %}</div>
+            </div>
+          </div>
+        </td>
+        {% if u.id == me.id %}
+        <td data-label="Role">{{ role_labels[u.role] }}</td>
+        <td data-label="Specialty"><span class="faint">n/a</span></td>
+        <td data-label="Activity">{{ u.raised }} raised</td>
+        <td data-label="Can sign in">Yes</td>
+        <td></td>
+        {% else %}
+        <td data-label="Role">
+          <select name="role" form="uf-{{ u.id }}" aria-label="Role for {{ u.name }}">
+            {% for r in roles %}<option value="{{ r }}" {{ 'selected' if u.role == r }}>{{ role_labels[r] }}</option>{% endfor %}
+          </select>
+        </td>
+        <td data-label="Specialty">
+          <select name="specialty" form="uf-{{ u.id }}" aria-label="Specialty for {{ u.name }}">
+            <option value="">None</option>
+            {% for c in categories %}<option {{ 'selected' if u.specialty == c }}>{{ c }}</option>{% endfor %}
+          </select>
+        </td>
+        <td data-label="Activity">{{ u.raised }} raised{% if u.role == 'technician' %}, {{ u.open_assigned }} open{% endif %}</td>
+        <td data-label="Can sign in"><label class="check"><input type="checkbox" name="active" value="1" form="uf-{{ u.id }}" {{ 'checked' if u.is_active }}> Yes</label></td>
+        <td>
+          <form id="uf-{{ u.id }}" method="post" action="{{ url_for('admin.update_user', user_id=u.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+            <button class="btn btn-sm" type="submit">Save</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ pagination(page, 'admin.users', args) }}
+{% else %}
+  {{ empty_state("No users found", "Try a different search or role.", url_for('admin.users'), "Reset filters") }}
+{% endif %}
+{% endblock %}

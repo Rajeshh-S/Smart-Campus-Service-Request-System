@@ -1,0 +1,55 @@
+{% extends "app_base.html" %}
+{% block title %}Profile{% endblock %}
+{% block heading %}Profile{% endblock %}
+
+{% block content %}
+<div class="form-layout">
+  <section class="panel form-panel">
+    <h2>Your details</h2>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="name">Full name</label>
+        <input id="name" name="name" required maxlength="80" value="{{ request.form.get('name', me.name) }}">
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" value="{{ me.email }}" disabled>
+        <p class="hint">Your email is your sign-in name, so it can't be changed here.</p>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="department">Department or hostel</label>
+          <input id="department" name="department" maxlength="80" value="{{ request.form.get('department', me.department or '') }}">
+        </div>
+        <div class="field">
+          <label for="phone">Phone</label>
+          <input id="phone" name="phone" type="tel" maxlength="20" value="{{ request.form.get('phone', me.phone or '') }}">
+        </div>
+      </div>
+      <button class="btn" type="submit">Save details</button>
+    </form>
+  </section>
+
+  <aside class="tips">
+    <section class="panel">
+      <h2>Account</h2>
+      <dl class="facts">
+        <div><dt>Role</dt><dd>{{ role_label }}</dd></div>
+        <div><dt>Member since</dt><dd>{{ joined }}</dd></div>
+        <div><dt>Requests raised</dt><dd>{{ total_requests }}</dd></div>
+      </dl>
+    </section>
+    <section class="panel">
+      <h2>Change password</h2>
+      <form method="post" action="{{ url_for('main.change_password') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field"><label for="current">Current password</label><input id="current" name="current" type="password" required autocomplete="current-password"></div>
+        <div class="field"><label for="new">New password</label><input id="new" name="new" type="password" required minlength="8" autocomplete="new-password"><p class="hint">At least 8 characters, with a letter and a number.</p></div>
+        <div class="field"><label for="confirm">Confirm new password</label><input id="confirm" name="confirm" type="password" required autocomplete="new-password"></div>
+        <button class="btn" type="submit">Change password</button>
+      </form>
+    </section>
+  </aside>
+</div>
+{% endblock %}

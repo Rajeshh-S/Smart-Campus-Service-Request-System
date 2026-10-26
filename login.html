@@ -1,0 +1,43 @@
+{% extends "public_base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block public_content %}
+<main class="auth">
+  <aside class="auth-side">
+    <h2>Every request has a paper trail.</h2>
+    <p>Sign in to see where your requests stand, add details, and confirm the fix.</p>
+    <div class="ticket-demo" aria-hidden="true">
+      <div class="ticket-demo-head"><span class="plaque">SC-0042</span><span class="badge st-in-progress">In Progress</span></div>
+      <strong>Projector not working in Room 204</strong>
+      <ul>
+        <li>{{ icon('check', 15) }}Submitted by a lecturer</li>
+        <li>{{ icon('check', 15) }}Assigned to a technician</li>
+        <li>{{ icon('clock', 15) }}Being repaired, due in 3 h</li>
+      </ul>
+    </div>
+  </aside>
+
+  <section class="auth-form">
+    <div class="auth-card">
+      <h1>Sign in</h1>
+      <p class="muted">Use the email address you registered with.</p>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next_url }}">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="username" required autofocus value="{{ request.form.get('email', '') }}">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="pw">
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+            <button type="button" class="pw-toggle" data-toggle-password="password" aria-label="Show password">{{ icon('eye', 18) }}</button>
+          </div>
+        </div>
+        <button class="btn btn-block" type="submit">Sign in</button>
+      </form>
+      <p class="auth-alt">New here? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+    </div>
+  </section>
+</main>
+{% endblock %}

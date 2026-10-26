@@ -1,0 +1,59 @@
+{% extends "app_base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Good to see you, {{ me.name.split(' ')[0] }}{% endblock %}
+{% block actions %}
+<a class="btn btn-sign btn-sm" href="{{ url_for('tickets.new') }}">{{ icon('plus', 16) }}<span class="btn-label">Report a problem</span></a>
+{% endblock %}
+{% block content %}
+<section class="hero-dashboard">
+  <div>
+    <span class="eyebrow">Campus service center</span>
+    <h2>Everything about your campus requests, in one place.</h2>
+    <p>Track repairs, follow updates, and get help without chasing the right department.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn btn-sign" href="{{ url_for('tickets.new') }}">{{ icon('plus', 17) }}Create request</a>
+    <a class="btn btn-ghost" href="{{ url_for('tickets.mine') }}">{{ icon('list', 17) }}View all</a>
+  </div>
+</section>
+
+<section class="dashboard-kpis" aria-label="Request summary">
+  <a class="dash-kpi" href="{{ url_for('tickets.mine') }}"><span class="kpi-icon open">{{ icon('inbox', 19) }}</span><b>{{ dashboard.counts['Pending'] + dashboard.counts['In Progress'] }}</b><small>Open requests</small></a>
+  <a class="dash-kpi" href="{{ url_for('tickets.mine', status='Resolved') }}"><span class="kpi-icon done">{{ icon('check', 19) }}</span><b>{{ dashboard.counts['Resolved'] }}</b><small>Resolved</small></a>
+  <a class="dash-kpi {{ 'attention' if dashboard.overdue else '' }}" href="{{ url_for('tickets.mine', status='Pending') }}"><span class="kpi-icon alert">{{ icon('alert', 19) }}</span><b>{{ dashboard.overdue }}</b><small>Past target</small></a>
+  <a class="dash-kpi" href="{{ url_for('tickets.mine', status='Resolved') }}"><span class="kpi-icon review">{{ icon('star', 19) }}</span><b>{{ dashboard.awaiting_feedback }}</b><small>Awaiting feedback</small></a>
+</section>
+
+<div class="dashboard-grid">
+  <section class="panel dashboard-recent">
+    <div class="panel-head"><div><span class="eyebrow">Activity</span><h2>Recent requests</h2></div><a href="{{ url_for('tickets.mine') }}">View all →</a></div>
+    {% if dashboard.recent %}
+    <div class="request-cards">
+      {% for r in dashboard.recent %}
+      <a class="request-card" href="{{ url_for('tickets.detail', req_id=r.id) }}">
+        <div class="request-card-main"><span class="ticket-code">SC-{{ '%04d'|format(r.id) }}</span><h3>{{ r.title }}</h3><p>{{ r.building }}{% if r.room %} · {{ r.room }}{% endif %}</p></div>
+        <div class="request-card-side"><span class="status status-{{ r.status|lower|replace(' ', '-') }}">{{ r.status }}</span><small>{{ r.priority }} priority</small></div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-dashboard">{{ icon('tool', 30) }}<h3>No requests yet</h3><p>Your submitted campus issues will appear here.</p><a class="btn btn-sign btn-sm" href="{{ url_for('tickets.new') }}">Create your first request</a></div>
+    {% endif %}
+  </section>
+
+  <aside class="dashboard-side">
+    <section class="panel quick-panel">
+      <div class="panel-head"><h2>Quick actions</h2></div>
+      <a class="quick-action" href="{{ url_for('tickets.new') }}">{{ icon('plus', 18) }}<span><b>Report a problem</b><small>Tell campus staff what needs fixing</small></span>{{ icon('arrow', 16) }}</a>
+      <a class="quick-action" href="{{ url_for('tickets.mine', status='In Progress') }}">{{ icon('clock', 18) }}<span><b>Track active work</b><small>See requests currently being handled</small></span>{{ icon('arrow', 16) }}</a>
+      <a class="quick-action" href="{{ url_for('main.notifications') }}">{{ icon('bell', 18) }}<span><b>Check updates</b><small>Read your latest service notifications</small></span>{{ icon('arrow', 16) }}</a>
+    </section>
+    <section class="panel help-panel">
+      <span class="help-badge">{{ icon('shield', 16) }} Campus tip</span>
+      <h2>Make requests easier to resolve</h2>
+      <p>Add the exact building, room and a photo when possible. Clear details help technicians arrive prepared.</p>
+      <a href="{{ url_for('tickets.new') }}">Start a detailed request →</a>
+    </section>
+  </aside>
+</div>
+{% endblock %}

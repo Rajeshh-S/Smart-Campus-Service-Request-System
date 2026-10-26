@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "_macros.html" import flash_messages, avatar %}
+{% block body_class %}app{% endblock %}
+{% block shell %}
+{% set ep = request.endpoint or '' %}
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation" data-unread-url="{{ url_for('api.unread') }}">
+    <a class="brand" href="{{ url_for('main.home') }}">
+      <span class="brand-mark">{{ icon('tool', 22) }}</span>
+      <span class="brand-name">Smart Campus<span class="brand-sub">Service Desk</span></span>
+    </a>
+
+    <nav class="nav">
+      <a href="{{ url_for('main.home') }}" class="{{ 'active' if ep == 'main.home' }}">{{ icon('grid') }}Dashboard</a>
+      <a href="{{ url_for('tickets.new') }}" class="{{ 'active' if ep == 'tickets.new' }}">{{ icon('plus') }}New request</a>
+      <a href="{{ url_for('tickets.mine') }}" class="{{ 'active' if ep == 'tickets.mine' }}">{{ icon('list') }}My requests</a>
+      {% if me.role in ('technician', 'admin') %}
+      <a href="{{ url_for('tickets.assigned') }}" class="{{ 'active' if ep == 'tickets.assigned' }}">{{ icon('inbox') }}Assigned to me</a>
+      {% endif %}
+      <a href="{{ url_for('main.notifications') }}" class="{{ 'active' if ep == 'main.notifications' }}">
+        {{ icon('bell') }}Notifications
+        <span class="count js-unread" {% if not unread %}hidden{% endif %}>{{ unread }}</span>
+      </a>
+
+      {% if me.role == 'admin' %}
+      <p class="nav-group">Administration</p>
+      <a href="{{ url_for('admin.overview') }}" class="{{ 'active' if ep == 'admin.overview' }}">{{ icon('grid') }}Overview</a>
+      <a href="{{ url_for('admin.requests_list') }}" class="{{ 'active' if ep == 'admin.requests_list' }}">{{ icon('list') }}All requests</a>
+      <a href="{{ url_for('admin.users') }}" class="{{ 'active' if ep == 'admin.users' }}">{{ icon('users') }}Users</a>
+      <a href="{{ url_for('admin.reports') }}" class="{{ 'active' if ep == 'admin.reports' }}">{{ icon('chart') }}Reports</a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-foot">
+      <a class="user-chip" href="{{ url_for('main.profile') }}">
+        {{ avatar(me.name) }}
+        <span><strong>{{ me.name }}</strong><small>{{ ROLE_LABELS[me.role] }}</small></span>
+      </a>
+      <form method="post" action="{{ url_for('auth.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="signout">{{ icon('logout', 18) }}Sign out</button>
+      </form>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">{{ icon('menu', 22) }}</button>
+      <h1 class="topbar-title">{% block heading %}{% endblock %}</h1>
+      <div class="topbar-actions">
+        <button class="icon-btn theme-btn" id="theme-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">{{ icon('star', 19) }}</button>
+        {% block actions %}{% endblock %}
+        <a class="icon-btn bell" href="{{ url_for('main.notifications') }}" aria-label="Notifications">
+          {{ icon('bell', 21) }}<span class="bell-dot js-unread-dot" {% if not unread %}hidden{% endif %}></span>
+        </a>
+      </div>
+    </header>
+    <main class="content" id="main">
+      {{ flash_messages() }}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<div class="command-palette" id="command-palette" hidden>
+  <div class="palette-backdrop" data-palette-close></div>
+  <section class="palette-dialog" role="dialog" aria-modal="true" aria-labelledby="palette-title">
+    <div class="palette-head">
+      <div><span class="eyebrow">Quick navigation</span><h2 id="palette-title">What do you need?</h2></div>
+      <button class="icon-btn" type="button" data-palette-close aria-label="Close">{{ icon('x', 18) }}</button>
+    </div>
+    <label class="palette-search"><span class="sr-only">Search actions</span>{{ icon('search', 18) }}<input id="palette-input" type="search" placeholder="Search pages or actions…" autocomplete="off"></label>
+    <nav class="palette-list" id="palette-list">
+      <a href="{{ url_for('main.home') }}" data-command="dashboard">{{ icon('grid', 18) }}<span><b>Dashboard</b><small>See your campus activity</small></span><kbd>G</kbd></a>
+      <a href="{{ url_for('tickets.new') }}" data-command="new request">{{ icon('plus', 18) }}<span><b>New request</b><small>Report a campus problem</small></span><kbd>N</kbd></a>
+      <a href="{{ url_for('tickets.mine') }}" data-command="my requests">{{ icon('list', 18) }}<span><b>My requests</b><small>Track submitted issues</small></span><kbd>M</kbd></a>
+      <a href="{{ url_for('main.notifications') }}" data-command="notifications">{{ icon('bell', 18) }}<span><b>Notifications</b><small>Read service updates</small></span><kbd>B</kbd></a>
+      <a href="{{ url_for('main.profile') }}" data-command="profile">{{ icon('user', 18) }}<span><b>Profile</b><small>Account and password</small></span><kbd>P</kbd></a>
+    </nav>
+    <div class="palette-foot"><span>Tip: press <kbd>Ctrl</kbd><kbd>K</kbd> anytime</span><span>Esc to close</span></div>
+  </section>
+</div>
+{% endblock %}

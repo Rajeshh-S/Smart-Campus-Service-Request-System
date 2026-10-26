@@ -1,0 +1,10 @@
+{
+  "name": "Smart Campus Service Desk",
+  "short_name": "Smart Campus",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#f6f9fc",
+  "theme_color": "#0f2942",
+  "description": "Campus service request and issue tracking portal",
+  "icons": [{"src": "/static/img/favicon.svg", "sizes": "any", "type": "image/svg+xml"}]
+}
